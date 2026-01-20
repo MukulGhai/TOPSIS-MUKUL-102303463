@@ -2,6 +2,7 @@
 
 **Author:** Mukul Ghai 
 **Roll Number:** 102303463
+**Link** https://pypi.org/project/Topsis-Mukul-102303463
 
 ---
 
@@ -97,3 +98,4 @@ additional columns: **Topsis Score** and **Rank**.
 ## License
 
 This project is developed for academic purposes.
+
