@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPSIS Analysis - Decision Making Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #272735;
+            --primary-dark: #4f46e5;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --bg-light: #f9fafb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            padding: 40px 30px;
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .alert {
+            padding: 16px 12px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border-left: 4px solid var(--success);
+        }
+
+        .alert.info {
+            background-color: #dbeafe;
+            color: #0c4a6e;
+            border-left: 4px solid var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background-color: white;
+            color: var(--text-dark);
+        }
+
+        input[type="file"]:hover,
+        input[type="text"]:hover,
+        input[type="email"]:hover {
+            border-color: var(--primary-light);
+        }
+
+        input[type="file"]:focus,
+        input[type="text"]:focus,
+        input[type="email"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+            background-color: #f8f9ff;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 6px;
+        }
+
+        .result-option-group {
+            background-color: var(--bg-light);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 2px solid var(--border);
+        }
+
+        .result-option-group > label {
+            margin-bottom: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .radio-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .email-option {
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .email-option.show {
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 13px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--primary-light);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border: 2px solid var(--primary-light);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .results-container h2 {
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .results-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tbody tr:hover {
+            background-color: var(--primary-light);
+        }
+
+        .rank-cell {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .score-cell {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .score-cell.high {
+            color: var(--success);
+        }
+
+        .score-cell.medium {
+            color: var(--warning);
+        }
+
+        .score-cell.low {
+            color: var(--danger);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .download-btn,
+        .reset-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .reset-btn {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 2px solid var(--border);
+        }
+
+        .reset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .form-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .results-table {
+                font-size: 12px;
+            }
+
+            .results-table td,
+            .results-table th {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>TOPSIS Analysis</h1>
+                <p class="subtitle">Decision Making Tool</p>
+            </div>
+
+            <div class="content">
+                <div id="alert" class="alert"></div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Processing your request...</div>
+                </div>
+
+                <form id="topsisForm">
+                    <div class="form-group">
+                        <label for="file">Upload File</label>
+                        <input type="file" id="file" name="file" accept=".csv,.xlsx,.xls" required>
+                        <div class="help-text">CSV, Excel (.xlsx, .xls) supported</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weights">Weights</label>
+                        <input type="text" id="weights" name="weights" placeholder="1,2,3,1" required>
+                        <div class="help-text">Comma-separated positive numbers</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="impacts">Impacts</label>
+                        <input type="text" id="impacts" name="impacts" placeholder="+,-,+,+" required>
+                        <div class="help-text">Comma-separated: '+' (maximize) or '-' (minimize)</div>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <div class="result-option-group">
+                        <label>How would you like to view results?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="displayOption" name="result_option" value="display" checked>
+                                <label for="displayOption">View on Webpage</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="emailOption" name="result_option" value="email">
+                                <label for="emailOption">Send via Email</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group email-option">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="your.email@example.com">
+                        <div class="help-text">We'll send the results to this address</div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" id="submitBtn">Analyze</button>
+                    </div>
+                </form>
+
+                <div id="resultsContainer" class="results-container">
+                    <h2>Analysis Results</h2>
+                    <div class="table-wrapper">
+                        <table id="resultsTable" class="results-table">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="download-btn" id="downloadBtn">⬇️ Download CSV</button>
+                        <button class="reset-btn" id="resetBtn">↻ New Analysis</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const form = document.getElementById('topsisForm');
+        const alertBox = document.getElementById('alert');
+        const loading = document.getElementById('loading');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsTable = document.getElementById('resultsTable');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const emailOptionDiv = document.querySelector('.email-option');
+        const emailInput = document.getElementById('email');
+        const resultOptions = document.querySelectorAll('input[name="result_option"]');
+        const fileInput = document.getElementById('file');
+        
+        let currentResultData = null;
+
+        // Initialize
+        setupEventListeners();
+
+        function setupEventListeners() {
+            // Result option toggle
+            resultOptions.forEach(option => {
+                option.addEventListener('change', toggleEmailField);
+            });
+
+            // Form submission
+            form.addEventListener('submit', handleFormSubmit);
+
+            // Download results
+            downloadBtn.addEventListener('click', downloadResults);
+
+            // Reset form
+            resetBtn.addEventListener('click', resetForm);
+        }
+
+        function toggleEmailField() {
+            const isEmail = document.querySelector('input[name="result_option"]:checked').value === 'email';
+            const emailSection = document.querySelector('.email-option');
+            
+            if (isEmail) {
+                emailSection.classList.add('show');
+                emailInput.required = true;
+            } else {
+                emailSection.classList.remove('show');
+                emailInput.required = false;
+                emailInput.value = '';
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            hideAlert();
+            resultsContainer.classList.remove('show');
+            
+            // Get form data
+            const formData = new FormData(form);
+            const weights = document.getElementById('weights').value.trim();
+            const impacts = document.getElementById('impacts').value.trim();
+            const resultOption = document.querySelector('input[name="result_option"]:checked').value;
+            const email = document.getElementById('email').value.trim();
+            
+            // Validate inputs
+            const validation = validateInputs(weights, impacts, resultOption, email);
+            if (!validation.valid) {
+                showAlert(validation.message, 'error');
+                return;
+            }
+            
+            // Submit form
+            await submitForm(formData, resultOption);
+        }
+
+        function validateInputs(weights, impacts, resultOption, email) {
+            if (!weights || !impacts) {
+                return { valid: false, message: 'Please fill in all required fields' };
+            }
+
+            if (!fileInput.value) {
+                return { valid: false, message: 'Please select a file' };
+            }
+            
+            const weightArray = weights.split(',').map(w => w.trim());
+            const impactArray = impacts.split(',').map(i => i.trim());
+            
+            if (weightArray.length !== impactArray.length) {
+                return { 
+                    valid: false, 
+                    message: `Weights (${weightArray.length}) and impacts (${impactArray.length}) count must be equal`
+                };
+            }
+
+            if (resultOption === 'email' && !email) {
+                return { valid: false, message: 'Email address is required for email delivery' };
+            }
+
+            return { valid: true };
+        }
+
+        async function submitForm(formData, resultOption) {
+            loading.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    if (resultOption === 'display' && data.result) {
+                        currentResultData = data.result;
+                        displayResults(data.result, data.columns);
+                        showAlert('✓ Analysis completed successfully!', 'success');
+                    } else {
+                        showAlert(data.message, 'success');
+                        setTimeout(() => {
+                            resetForm();
+                        }, 2000);
+                    }
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data, columns) {
+            const thead = resultsTable.querySelector('thead');
+            const tbody = resultsTable.querySelector('tbody');
+            
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // Create header row
+            const headerRow = document.createElement('tr');
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // Create data rows
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    let value = row[col];
+                    
+                    // Format and style special columns
+                    if (col === 'Rank') {
+                        td.classList.add('rank-cell');
+                        value = `#${value}`;
+                    } else if (col === 'Topsis Score') {
+                        td.classList.add('score-cell');
+                        if (value >= 0.7) {
+                            td.classList.add('high');
+                        } else if (value >= 0.4) {
+                            td.classList.add('medium');
+                        } else {
+                            td.classList.add('low');
+                        }
+                        value = value.toFixed(4);
+                    } else if (typeof value === 'number') {
+                        value = value.toFixed(2);
+                    }
+                    
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            resultsContainer.classList.add('show');
+            resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function downloadResults() {
+            if (!currentResultData) return;
+            
+            const columns = Object.keys(currentResultData[0]);
+            let csv = columns.join(',') + '\n';
+            
+            currentResultData.forEach(row => {
+                const rowData = columns.map(col => {
+                    let value = row[col];
+                    if (typeof value === 'string' && value.includes(',')) {
+                        value = '"' + value + '"';
+                    }
+                    return value;
+                });
+                csv += rowData.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `topsis_results_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function resetForm() {
+            form.reset();
+            fileInput.value = '';
+            resultsContainer.classList.remove('show');
+            emailOptionDiv.classList.remove('show');
+            currentResultData = null;
+            hideAlert();
+        }
+
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert ${type}`;
+            alertBox.style.display = 'block';
+            
+            if (type === 'error') {
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            if (type === 'success') {
+                setTimeout(hideAlert, 5000);
+            }
+        }
+
+        function hideAlert() {
+            alertBox.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
